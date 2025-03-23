@@ -5,7 +5,7 @@
 
 #ifdef PALLOC_SUFFIX
 #   define PCONCAT_I( x, y ) x##y
-#   define PCONCAT( x, y ) PALLOC_CONCAT_I(x, y)
+#   define PCONCAT(x, y) PCONCAT_I(x, y)
 
 #   define PINIT PALLOC_CONCAT(pinit, PALLOC_SUFFIX)
 #   define PFINI PALLOC_CONCAT(pfini, PALLOC_SUFFIX)
