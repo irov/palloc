@@ -48,7 +48,7 @@ src
 )
 
 if(PALLOC_CONFIG)
-    add_definitions(-DPALLOC_CONFIG=${PALLOC_CONFIG_PATH})
+    add_definitions(-DPALLOC_CONFIG=\"${PALLOC_CONFIG_PATH}\")
 endif()
 
 if(PALLOC_THREAD)
