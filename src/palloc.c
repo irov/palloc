@@ -3,7 +3,7 @@
 
 #ifndef PALLOC_CONFIG_MEMORY
 #   include <stdlib.h>
-#   include <memory.h>
+#   include <string.h>
 
 #   define PALLOC_STD_MALLOC(S) malloc(S)
 #   define PALLOC_STD_FREE(P) free(P)
@@ -35,7 +35,7 @@ static int PALLOC_STD_ATOMIC_COMPARE_EXCHANGE_WEAK( void * volatile * p, void **
     if( o == *e )
     {
         return 1;
-    } 
+    }
 
     *e = o;
 
@@ -247,6 +247,8 @@ static void PALLOC_STD_MUTEX_UNLOCK( PALLOC_STD_MUTEX_T * l )
     PALLOC_DECL_FREE_BLOCK(N)
 
 #define PALLOC_THRESHOLD 2048
+
+#define PALLOC_STD_ALLOC_MARKER (0xffff)
 
 PALLOC_DECLARE( 16, 4096 );
 PALLOC_DECLARE( 32, 2048 );
@@ -461,8 +463,8 @@ void * PALLOC( size_t nbytes )
     if( nbytes >= PALLOC_THRESHOLD )
     {
         unsigned char * q = (unsigned char *)PALLOC_STD_MALLOC( nbytes + PALLOC_BUFFSIZEOFFSET );
-        *q++ = 0xff;
-        *q++ = 0xff;
+        *q++ = PALLOC_STD_ALLOC_MARKER & 0xff;
+        *q++ = (PALLOC_STD_ALLOC_MARKER >> 8) & 0xff;
         unsigned char * p = q;
 
         return (void *)p;
@@ -470,7 +472,7 @@ void * PALLOC( size_t nbytes )
 
     int index = PALLOC_INDEX( nbytes );
 
-    unsigned char * q = PALLOC_ALLOC(index);
+    unsigned char * q = PALLOC_ALLOC( index );
 
     *q++ = nbytes & 0xff;
     *q++ = (nbytes >> 8) & 0xff;
@@ -491,7 +493,7 @@ void PFREE( void * p )
     size_t lbytes = *(--q);
     size_t nbytes = hbytes << 8 | lbytes;
 
-    if( nbytes == 0xffff )
+    if( nbytes == PALLOC_STD_ALLOC_MARKER )
     {
         PALLOC_STD_FREE( q );
 
@@ -500,7 +502,7 @@ void PFREE( void * p )
 
     int index = PALLOC_INDEX( nbytes );
 
-    PALLOC_FREE(index, q);
+    PALLOC_FREE( index, q );
 }
 
 void * PREALLOC( void * p, size_t nbytes )
@@ -521,23 +523,30 @@ void * PREALLOC( void * p, size_t nbytes )
     size_t old_hbytes = *(--old_q);
     size_t old_lbytes = *(--old_q);
     size_t old_nbytes = old_hbytes << 8 | old_lbytes;
-    
+
+    if( old_nbytes == nbytes )
+    {
+        return p;
+    }
+
     if( nbytes >= PALLOC_THRESHOLD )
     {
-        if( old_nbytes == 0xffff )
+        if( old_nbytes == PALLOC_STD_ALLOC_MARKER )
         {
             unsigned char * new_q = (unsigned char *)PALLOC_STD_REALLOC( old_q, nbytes + PALLOC_BUFFSIZEOFFSET );
-            new_q++;
-            new_q++;
+
             unsigned char * new_p = new_q;
+            new_p++;
+            new_p++;
 
             return new_p;
         }
 
         unsigned char * new_q = (unsigned char *)PALLOC_STD_MALLOC( nbytes + PALLOC_BUFFSIZEOFFSET );
-        *new_q++ = 0xff;
-        *new_q++ = 0xff;
+
         unsigned char * new_p = new_q;
+        *new_p++ = PALLOC_STD_ALLOC_MARKER & 0xff;
+        *new_p++ = (PALLOC_STD_ALLOC_MARKER >> 8) & 0xff;
 
         PALLOC_STD_MEMCPY( new_p, p, old_nbytes );
 
@@ -550,12 +559,13 @@ void * PREALLOC( void * p, size_t nbytes )
 
     int new_index = PALLOC_INDEX( nbytes );
 
-    if( old_nbytes == 0xffff )
+    if( old_nbytes == PALLOC_STD_ALLOC_MARKER )
     {
         unsigned char * new_q = PALLOC_ALLOC( new_index );
-        *new_q++ = nbytes & 0xff;
-        *new_q++ = (nbytes >> 8) & 0xff;
+
         unsigned char * new_p = new_q;
+        *new_p++ = nbytes & 0xff;
+        *new_p++ = (nbytes >> 8) & 0xff;
 
         PALLOC_STD_MEMCPY( new_p, p, nbytes );
 
@@ -573,9 +583,9 @@ void * PREALLOC( void * p, size_t nbytes )
 
     unsigned char * new_q = PALLOC_ALLOC( new_index );
 
-    *new_q++ = nbytes & 0xff;
-    *new_q++ = (nbytes >> 8) & 0xff;
     unsigned char * new_p = new_q;
+    *new_p++ = nbytes & 0xff;
+    *new_p++ = (nbytes >> 8) & 0xff;
 
     size_t min_nbytes = old_nbytes < nbytes ? old_nbytes : nbytes;
     PALLOC_STD_MEMCPY( new_p, p, min_nbytes );
