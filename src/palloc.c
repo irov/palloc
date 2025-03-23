@@ -425,6 +425,26 @@ const int palloc_index_table[2048] = {
 #define PALLOC_ALLOC(I) (*palloc_alloc_table[I])();
 #define PALLOC_FREE(I, Q) (*palloc_free_table[I])(Q);
 
+static unsigned char * palloc_qp( unsigned char * q, size_t nbytes )
+{
+    unsigned char * p = q;
+    *p++ = nbytes & 0xff;
+    *p++ = (nbytes >> 8) & 0xff;
+
+    return p;
+}
+
+static unsigned char * palloc_pq( unsigned char * p, size_t * const nbytes )
+{
+    unsigned char * q = p;
+    size_t hbytes = *(--q);
+    size_t lbytes = *(--q);
+    
+    *nbytes = (hbytes << 8) | lbytes;
+
+    return q;
+}
+
 void PINIT()
 {
 #if defined(PALLOC_THREAD) && defined(PALLOC_MUTEX)
@@ -463,9 +483,8 @@ void * PALLOC( size_t nbytes )
     if( nbytes >= PALLOC_THRESHOLD )
     {
         unsigned char * q = (unsigned char *)PALLOC_STD_MALLOC( nbytes + PALLOC_BUFFSIZEOFFSET );
-        *q++ = PALLOC_STD_ALLOC_MARKER & 0xff;
-        *q++ = (PALLOC_STD_ALLOC_MARKER >> 8) & 0xff;
-        unsigned char * p = q;
+        
+        unsigned char * p = palloc_qp( q, PALLOC_STD_ALLOC_MARKER );
 
         return (void *)p;
     }
@@ -474,9 +493,7 @@ void * PALLOC( size_t nbytes )
 
     unsigned char * q = PALLOC_ALLOC( index );
 
-    *q++ = nbytes & 0xff;
-    *q++ = (nbytes >> 8) & 0xff;
-    unsigned char * p = q;
+    unsigned char * p = palloc_qp( q, nbytes );
 
     return (void *)p;
 }
@@ -488,10 +505,8 @@ void PFREE( void * p )
         return;
     }
 
-    unsigned char * q = (unsigned char *)p;
-    size_t hbytes = *(--q);
-    size_t lbytes = *(--q);
-    size_t nbytes = hbytes << 8 | lbytes;
+    size_t nbytes;
+    unsigned char * q = palloc_pq( p, &nbytes );
 
     if( nbytes == PALLOC_STD_ALLOC_MARKER )
     {
@@ -519,10 +534,8 @@ void * PREALLOC( void * p, size_t nbytes )
         nbytes = 1;
     }
 
-    unsigned char * old_q = (unsigned char *)p;
-    size_t old_hbytes = *(--old_q);
-    size_t old_lbytes = *(--old_q);
-    size_t old_nbytes = old_hbytes << 8 | old_lbytes;
+    size_t old_nbytes;
+    unsigned char * old_q = palloc_pq( p, &old_nbytes );
 
     if( old_nbytes == nbytes )
     {
@@ -535,18 +548,14 @@ void * PREALLOC( void * p, size_t nbytes )
         {
             unsigned char * new_q = (unsigned char *)PALLOC_STD_REALLOC( old_q, nbytes + PALLOC_BUFFSIZEOFFSET );
 
-            unsigned char * new_p = new_q;
-            new_p++;
-            new_p++;
+            unsigned char * new_p = palloc_qp( new_q, PALLOC_STD_ALLOC_MARKER );
 
             return new_p;
         }
 
         unsigned char * new_q = (unsigned char *)PALLOC_STD_MALLOC( nbytes + PALLOC_BUFFSIZEOFFSET );
 
-        unsigned char * new_p = new_q;
-        *new_p++ = PALLOC_STD_ALLOC_MARKER & 0xff;
-        *new_p++ = (PALLOC_STD_ALLOC_MARKER >> 8) & 0xff;
+        unsigned char * new_p = palloc_qp( new_q, PALLOC_STD_ALLOC_MARKER );
 
         PALLOC_STD_MEMCPY( new_p, p, old_nbytes );
 
@@ -563,9 +572,7 @@ void * PREALLOC( void * p, size_t nbytes )
     {
         unsigned char * new_q = PALLOC_ALLOC( new_index );
 
-        unsigned char * new_p = new_q;
-        *new_p++ = nbytes & 0xff;
-        *new_p++ = (nbytes >> 8) & 0xff;
+        unsigned char * new_p = palloc_qp( new_q, nbytes );
 
         PALLOC_STD_MEMCPY( new_p, p, nbytes );
 
@@ -583,9 +590,7 @@ void * PREALLOC( void * p, size_t nbytes )
 
     unsigned char * new_q = PALLOC_ALLOC( new_index );
 
-    unsigned char * new_p = new_q;
-    *new_p++ = nbytes & 0xff;
-    *new_p++ = (nbytes >> 8) & 0xff;
+    unsigned char * new_p = palloc_qp( new_q, nbytes );
 
     size_t min_nbytes = old_nbytes < nbytes ? old_nbytes : nbytes;
     PALLOC_STD_MEMCPY( new_p, p, min_nbytes );
