@@ -44,12 +44,9 @@ ENDMACRO()
 PALLOC_ADD_FILTER(
 src
     include/palloc/palloc.h
+    include/palloc/pconfig.h
     src/palloc.c
 )
-
-if(PALLOC_CONFIG)
-    add_definitions(-DPALLOC_CONFIG=\"${PALLOC_CONFIG_PATH}\")
-endif()
 
 if(PALLOC_THREAD)
     add_definitions(-DPALLOC_THREAD)
@@ -65,6 +62,10 @@ endif()
 
 if(PALLOC_SUFFIX)
     add_definitions(-DPALLOC_SUFFIX=${PALLOC_SUFFIX_NAME})
+endif()
+
+if(PALLOC_CONFIG)
+    include_directories(${PALLOC_CONFIG_PATH})
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

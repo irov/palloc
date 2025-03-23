@@ -1,8 +1,5 @@
 #include "palloc/palloc.h"
-
-#if defined(PALLOC_CONFIG)
-#   include PALLOC_CONFIG
-#endif
+#include "palloc/pconfig.h"
 
 #ifndef PALLOC_CONFIG_MEMORY
 #   include <stdlib.h>
