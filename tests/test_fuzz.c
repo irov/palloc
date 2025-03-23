@@ -113,7 +113,7 @@ static DWORD WINAPI thread_func( LPVOID lpParam )
 
 int main( void )
 {
-    pinit();
+    PALLOC_INIT();
 
     HANDLE threads[NUM_THREADS];
     thread_arg_t thread_args[NUM_THREADS];
@@ -142,7 +142,7 @@ int main( void )
         CloseHandle( threads[i] );
     }
 
-    pfini();
+    PALLOC_FINI();
 
     return EXIT_SUCCESS;
 }

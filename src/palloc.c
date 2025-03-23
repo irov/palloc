@@ -421,7 +421,7 @@ const int palloc_index_table[2048] = {
 #define PALLOC_ALLOC(I) (*palloc_alloc_table[I])();
 #define PALLOC_FREE(I, Q) (*palloc_free_table[I])(Q);
 
-void pinit()
+void PALLOC_INIT()
 {
 #if defined(PALLOC_THREAD) && defined(PALLOC_MUTEX)
     PALLOC_STD_MUTEX_INIT( &PALLOC_NAME_GLOBAL_MUTEX( 16 ) );
@@ -435,7 +435,7 @@ void pinit()
 #endif    
 }
 
-void pfini()
+void PALLOC_FINI()
 {
 #if defined(PALLOC_THREAD) && defined(PALLOC_MUTEX)
     PALLOC_STD_MUTEX_FINI( &PALLOC_NAME_GLOBAL_MUTEX( 16 ) );
@@ -449,7 +449,7 @@ void pfini()
 #endif
 }
 
-void * palloc( size_t nbytes )
+void * PALLOC( size_t nbytes )
 {
     if( nbytes == 0 )
     {
@@ -477,7 +477,7 @@ void * palloc( size_t nbytes )
     return (void *)p;
 }
 
-void pfree( void * p )
+void PFREE( void * p )
 {
     if( p == NULL )
     {
@@ -501,11 +501,11 @@ void pfree( void * p )
     PALLOC_FREE(index, q);
 }
 
-void * prealloc( void * p, size_t nbytes )
+void * PREALLOC( void * p, size_t nbytes )
 {
     if( p == NULL )
     {
-        void * new_p = palloc( nbytes );
+        void * new_p = PALLOC( nbytes );
 
         return new_p;
     }

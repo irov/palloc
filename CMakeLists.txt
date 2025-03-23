@@ -50,7 +50,7 @@ if(PALLOC_MUTEX)
 endif()
 
 if(PALLOC_SUFFIX)
-    add_definitions(-DPALLOC_SUFFIX_NAME=${PALLOC_SUFFIX_NAME})
+    add_definitions(-DPALLOC_SUFFIX=${PALLOC_SUFFIX_NAME})
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
