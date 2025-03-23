@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+void pinit();
+void pfini();
+
 void * palloc( size_t nbytes );
 void pfree( void * p );
 void * prealloc( void * p, size_t nbytes );

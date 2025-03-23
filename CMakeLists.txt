@@ -2,7 +2,16 @@ cmake_minimum_required(VERSION 3.10)
 
 PROJECT(palloc LANGUAGES C)
 
+OPTION(PALLOC_THREAD "PALLOC_THREAD" OFF)
+OPTION(PALLOC_LOCKFREE "PALLOC_LOCKFREE" OFF)
+OPTION(PALLOC_MUTEX "PALLOC_MUTEX" OFF)
+OPTION(PALLOC_SANITIZE "PALLOC_SANITIZE" OFF)
 OPTION(PALLOC_TEST "PALLOC_TEST" OFF)
+
+if(PALLOC_SANITIZE)
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /fsanitize=address")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address")
+endif()
 
 MACRO(PALLOC_ADD_FILTER group_name)
     SOURCE_GROUP(${group_name} FILES ${ARGN})
@@ -14,6 +23,18 @@ src
     include/palloc/palloc.h
     src/palloc.c
 )
+
+if(PALLOC_THREAD)
+    add_definitions(-DPALLOC_THREAD)
+endif()
+
+if(PALLOC_LOCKFREE)
+    add_definitions(-DPALLOC_LOCKFREE)
+endif()
+
+if(PALLOC_MUTEX)
+    add_definitions(-DPALLOC_MUTEX)
+endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
