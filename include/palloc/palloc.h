@@ -7,11 +7,11 @@
 #   define PCONCAT_I( x, y ) x##y
 #   define PCONCAT(x, y) PCONCAT_I(x, y)
 
-#   define PINIT PALLOC_CONCAT(pinit, PALLOC_SUFFIX)
-#   define PFINI PALLOC_CONCAT(pfini, PALLOC_SUFFIX)
-#   define PALLOC PALLOC_CONCAT(palloc, PALLOC_SUFFIX)
-#   define PFREE PALLOC_CONCAT(pfree, PALLOC_SUFFIX)
-#   define PREALLOC PALLOC_CONCAT(prealloc, PALLOC_SUFFIX)
+#   define PINIT PCONCAT(pinit, PALLOC_SUFFIX)
+#   define PFINI PCONCAT(pfini, PALLOC_SUFFIX)
+#   define PALLOC PCONCAT(palloc, PALLOC_SUFFIX)
+#   define PFREE PCONCAT(pfree, PALLOC_SUFFIX)
+#   define PREALLOC PCONCAT(prealloc, PALLOC_SUFFIX)
 #else
 #   define PINIT pinit
 #   define PFINI pfini
