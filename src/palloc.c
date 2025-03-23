@@ -2,14 +2,19 @@
 
 #if defined(PALLOC_CONFIG)
 #   include PALLOC_CONFIG
-#else
+#endif
+
+#ifndef PALLOC_CONFIG_MEMORY
 #   include <stdlib.h>
 #   include <memory.h>
+
 #   define PALLOC_STD_MALLOC(S) malloc(S)
 #   define PALLOC_STD_FREE(P) free(P)
 #   define PALLOC_STD_REALLOC(P, S) realloc(P, S)
 #   define PALLOC_STD_MEMCPY(D, S, N) memcpy(D, S, N)
+#endif
 
+#ifndef PALLOC_CONFIG_THREAD
 #   if defined(PALLOC_THREAD) && defined(PALLOC_LOCKFREE)
 #       if defined(_MSC_VER)
 #           include <intrin.h>
@@ -421,7 +426,7 @@ const int palloc_index_table[2048] = {
 #define PALLOC_ALLOC(I) (*palloc_alloc_table[I])();
 #define PALLOC_FREE(I, Q) (*palloc_free_table[I])(Q);
 
-void PALLOC_INIT()
+void PINIT()
 {
 #if defined(PALLOC_THREAD) && defined(PALLOC_MUTEX)
     PALLOC_STD_MUTEX_INIT( &PALLOC_NAME_GLOBAL_MUTEX( 16 ) );
@@ -435,7 +440,7 @@ void PALLOC_INIT()
 #endif    
 }
 
-void PALLOC_FINI()
+void PFINI()
 {
 #if defined(PALLOC_THREAD) && defined(PALLOC_MUTEX)
     PALLOC_STD_MUTEX_FINI( &PALLOC_NAME_GLOBAL_MUTEX( 16 ) );
